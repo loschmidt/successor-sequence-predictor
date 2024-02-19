@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Vaencestors
 
 This project attempt to serve as backend for generation of ancestral like sequences

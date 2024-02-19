@@ -1,0 +1,14 @@
+out_dir: './experiment_path/'              # Path to the directory where we want to store results
+input: './path_to_directory_with_trees/'   # directory with phylogeny trees including ancestors
+
+#query: "query"            # IMPORTANT, identifier of the sequence in the trees, default query name is used
+
+validation: YES            # predicted an extant sequence for validation purpose
+transition: YES            # predict only values in the case of 3 or more transitions between AA in the lineage
+trees: 131                 # number of trees in INPUT directory
+confidence_level: 0        # 0 insert the most probable AA by regression, 1 the second predicted AA and so on
+
+protein_name: CSP          # name of the protein to more customize the output file form
+
+# AA indices to use, see indices/aaindex.csv to get all indices currently supported by predictor, please add custom one
+indices: FASG760101 FASG760102 GOLD730102 WOLR790101 BHAR880101 BULH740101 FAUJ880108 ZIMJ680103 ZIMJ680104

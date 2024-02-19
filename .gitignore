@@ -1,0 +1,6 @@
+results/
+LGK/
+.idea/
+SuccessorRobustReconstruction.egg-info/*
+*/__pycache__/*
+successors/cli/__pycache__/*

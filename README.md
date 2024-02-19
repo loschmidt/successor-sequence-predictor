@@ -1,7 +1,6 @@
-<<<<<<< HEAD
 # Vaencestors
 
-This project attempt to serve as backend for generation of ancestral like sequences
+This project attempts to serve as backend for generation of ancestral like sequences
 
 Scripts in this repository are expected to be used as the backend service for 
 FireProt tool

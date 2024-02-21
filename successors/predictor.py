@@ -6,7 +6,6 @@ import glob
 import itertools
 import os
 import pickle
-from typing import Tuple
 from successors.internal_types import *
 
 import numpy as np

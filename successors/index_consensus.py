@@ -291,14 +291,10 @@ def predict_level2(run: RunSetup):
     """Predicted level 2 consensus - now we have one sequence over all trees"""
     log_msg = f"Predicting Level 2 consensus for {run.protein_name} \n"
 
-    input_pattern = os.path.join(run.tmp_files, 'tree[0-9][0-9][0-9][0-9]')
+    input_pattern = os.path.join(run.tmp_files, 'tree*')
     trees = glob.glob(input_pattern)
-    TREE_CNT = int(os.environ['tree_cnt'])
-
-    data_path = os.environ['input']
-    proteins = [run.protein_name]
-    templ = "{}_set_{}/"
-
+    tree_cnt = len(trees)  # int(os.environ['tree_cnt'])
+    protein = [run.protein_name]
     # Fetch all necessary data
     with open(os.path.join(run.index_fld, "aa_idx.pkl"), "rb") as f:
         aa_to_idx = pickle.load(f)
@@ -318,268 +314,232 @@ def predict_level2(run: RunSetup):
 
     CONFIDENCE_LEVEL = run.confidence_level
     # prepare csv files for every
-    for protein in proteins:
-        gen_dir = f"outputs/{protein}/level2/" os.path.join()
-        os.makedirs(gen_dir, exist_ok=True)
-        tmp_dir = os.path.join(run.tmp_files, "level2")  # f"outputs/{protein}/level2/script_tmp/"
-        os.makedirs(tmp_dir, exist_ok=True)
+    # for protein in proteins:
+    # gen_dir = f"outputs/{protein}/level2/" os.path.join()
+    # os.makedirs(gen_dir, exist_ok=True)
+    level2_dir = os.path.join(run.tmp_files, "level2")  # f"outputs/{protein}/level2/script_tmp/"
+    os.makedirs(level2_dir, exist_ok=True)
 
-        log_msg += "CONFIDENCE LEVEL {}".format(CONFIDENCE_LEVEL)+"\n"
-        print(log_msg)
+    log_msg += "CONFIDENCE LEVEL {}".format(CONFIDENCE_LEVEL)+"\n"
+    print(log_msg)
 
-        # fetch all r2 and slope metrics
-        metrics = {"r2": {f: [] for f in selected_indices},
-                   "slope": {f: [] for f in selected_indices},
-                   "sequence_trend": {f: [] for f in selected_indices},
-                   "sequence_trend_break": {f: [] for f in selected_indices},
-                   "fluctuations": {f: [] for f in selected_indices},
-                   "values": {f: [] for f in selected_indices}
-                   }
+    # fetch all r2 and slope metrics
+    metrics = {"r2": {f: [] for f in selected_indices},
+               "slope": {f: [] for f in selected_indices},
+               "sequence_trend": {f: [] for f in selected_indices},
+               "sequence_trend_break": {f: [] for f in selected_indices},
+               "fluctuations": {f: [] for f in selected_indices},
+               "values": {f: [] for f in selected_indices}
+               }
 
-        indicis_sequences = dict()
-        for ind_name in selected_indices:
-            indicis_sequences[ind_name] = list()
+    indicis_sequences = dict()
+    for ind_name in selected_indices:
+        indicis_sequences[ind_name] = list()
 
-        # catch all sequences for protein, and all statistics from tmp files
-        for folder_i, tree_fld in enumerate(trees):
-            indices_file = open(os.path.join(tree_fld, "prediction_indices_{}.fasta".format(CONFIDENCE_LEVEL)))
-            # TODO check indices sequences what does it mean
-            id_name = ""
-            for line in indices_file.readlines():
-                line = line.strip()
-                if line == "" or line == "\n":
-                    continue
-                if line[0] == ">":
-                    id_name = line[1:]
-                    continue
-                indicis_sequences[id_name].append(line)
-            indices_file.close()
+    # catch all sequences for protein, and all statistics from tmp files
+    for tree_fld in trees:
+        # load predicted index sequences for all trees and sort them to one variable by index
+        indices_file_path = os.path.join(tree_fld, "prediction_indices_{}.fasta".format(CONFIDENCE_LEVEL))
+        indices_predictions_per_tree, _ = load_msa(indices_file_path)
+        for aa_idx, seq in indices_predictions_per_tree.items():
+            indicis_sequences[aa_idx].append(seq)
+        # get calculate statistics over all trees
+        for ind in selected_indices:
+            with open(os.path.join(tree_fld, f"r2_{ind}.pkl"), "rb") as f:
+                metrics["r2"][ind].append(pickle.load(f))
+            with open(os.path.join(tree_fld, f"slope_{ind}.pkl"), "rb") as f:
+                metrics["slope"][ind].append(pickle.load(f))
+            with open(os.path.join(tree_fld, f"sequentiality_{ind}.pkl"), "rb") as f:
+                metrics["sequence_trend"][ind].append(pickle.load(f))
+            with open(os.path.join(tree_fld, f"sequentiality2_{ind}.pkl"), "rb") as f:
+                metrics["sequence_trend_break"][ind].append(pickle.load(f))
+            with open(os.path.join(tree_fld, f"fluctuation_{ind}.pkl"), "rb") as f:
+                metrics["fluctuations"][ind].append(pickle.load(f))
+            with open(os.path.join(tree_fld, f"values_{ind}.pkl"), "rb") as f:
+                metrics["values"][ind].append(pickle.load(f))
 
-            for ind in selected_indices:
-                with open(os.path.join(tree_fld, f"r2_{ind}.pkl"), "rb") as f:
-                    metrics["r2"][ind].append(pickle.load(f))
-                with open(os.path.join(tree_fld, f"slope_{ind}.pkl"), "rb") as f:
-                    metrics["slope"][ind].append(pickle.load(f))
-                with open(os.path.join(tree_fld, f"sequentiality_{ind}.pkl"), "rb") as f:
-                    metrics["sequence_trend"][ind].append(pickle.load(f))
-                with open(os.path.join(tree_fld, f"sequentiality2_{ind}.pkl"), "rb") as f:
-                    metrics["sequence_trend_break"][ind].append(pickle.load(f))
-                with open(os.path.join(tree_fld, f"fluctuation_{ind}.pkl"), "rb") as f:
-                    metrics["fluctuations"][ind].append(pickle.load(f))
-                with open(os.path.join(tree_fld, f"values_{ind}.pkl"), "rb") as f:
-                    metrics["values"][ind].append(pickle.load(f))
+    # Prepare WT
+    wt_dict, _ = load_msa(str(os.path.join(run.ground_truth, run.protein_name)))
+    wt = wt_dict[run.query]
 
-        # Prepare WT
-        wt_dict, _ = load_msa(str(os.path.join(run.ground_truth, run.protein_name)))
-        wt = wt_dict[run.query]
+    indices_stats = {}
+    # create aa indices fasta for alignment and align them
+    for aa_id in selected_indices:
+        print("Processing... " + aa_id)
+        indices_stats[aa_id] = []
 
-        indices_stats = {}
-        # create aa indices fasta for alignment and align them
-        for aa_id in selected_indices:
-            print(aa_id)
-            indices_stats[aa_id] = []
-            wt_fasta_name = aa_id + "_{}_toAlign.fasta".format(CONFIDENCE_LEVEL)
-            of = open(tmp_dir + wt_fasta_name, "w")
-            for seq_i, seq in enumerate(indicis_sequences[aa_id]):
-                of.write(">seq_tree_{}\n".format(seq_i))
-                of.write(seq.replace("-", ""))
-                of.write("\n")
-            of.close()
+        # align all predictions for one AA index over all trees
+        wt_fasta_file_path = os.path.join(run.fasta, f"{aa_id}_{CONFIDENCE_LEVEL}.fasta")
+        msa_file_path = os.path.join(run.fasta, f"{aa_id}_{CONFIDENCE_LEVEL}_msa.fasta")
+        sequences_to_align = {f"seq_tree_{i_tree}": s for i_tree, s in enumerate(indicis_sequences[aa_id])}
+        alignment, msa_len = clustalo_sequences(wt_fasta_file_path, msa_file_path, sequences_to_align)
 
-            msa_file = "{}_{}_msa.fasta".format(aa_id, CONFIDENCE_LEVEL)
-            os.system("clustalo -i " + tmp_dir + wt_fasta_name + " -o " + tmp_dir + msa_file + " --force")
+        # create mapping of MSA position to original one
+        seq_mapping = dict()
+        trees_map_to_msa = list()
+        for name, seq in alignment.items():
+            seq_mapping[name] = [i for i, aa in enumerate(seq) if aa != '-']  # items are indexes to msa
+            trees_map_to_msa.append(seq_mapping[name])
 
-            # create statistics for indices
-            mf = open(tmp_dir + msa_file)
-            alignment = dict()
-            pred_cnt, loading_sequence = 0, ""
-            for line in mf.readlines():
-                line = line.strip()
-                if line == "" or line == "\n":
-                    continue
-                if line[0] == ">":
-                    if pred_cnt == 1:
-                        alignment[seq_name] = loading_sequence
-                        loading_sequence = ""
-                    seq_name = line[1:]
-                    pred_cnt = 1
-                    continue
-                loading_sequence += line
-            mf.close()
-            # Last sequence not in
-            alignment[seq_name] = loading_sequence
+        per_position_aa_frequencies = dict()
+        for pos in range(msa_len):
+            per_position_aa_frequencies[str(pos)] = {aa: 0 for aa in aa_to_idx}
+            per_position_aa_frequencies[str(pos)]["-"] = 0
+        # Count occurrences
+        for seq in alignment.values():
+            for pos_i, pos in enumerate(seq):
+                per_position_aa_frequencies[str(pos_i)][pos] += 1
 
-            wt_fasta_file_path = os.path.join(run.fasta, f"{aa_id}_{CONFIDENCE_LEVEL}.fasta")
-            msa_file_path = os.path.join(run.fasta, f"{aa_id}_{CONFIDENCE_LEVEL}_msa.fasta")
-            alignment = clustalo_sequences(wt_fasta_file_path, msa_file_path, )
+        result_dict = dict()
+        result_dict["total"] = tree_cnt
+        predicted_sequence = ""
+        for pos, vals in per_position_aa_frequencies.items():
+            ordered_level = {k: v for k, v in sorted(vals.items(), key=lambda item: item[1])}
+            result_dict[pos] = list(list(ordered_level.items())[-1])
+            predicted_sequence += list(ordered_level.items())[-1][0]
+        df = pd.DataFrame.from_dict(result_dict)
+        df.to_csv(os.path.join(level2_dir, f"{aa_id}_average_{CONFIDENCE_LEVEL}.csv"))
 
-            # create mapping of MSA position to original one
-            seq_mapping = dict()
-            trees_map_to_msa = list()
-            over_tree_msa_len = len(list(alignment.values())[0])
-            for name, seq in alignment.items():
-                seq_mapping[name] = [i for i, aa in enumerate(seq) if aa != '-']  # items are indexes to msa
-                trees_map_to_msa.append(seq_mapping[name])
+        # compare with WT
+        # TODO ALIGN TO THE WT AND CHECK THAT CORRECT FILE IS USED EVERYWHERE
+        wt_fasta_name = os.path.join(level2_dir, f"{aa_id}_{CONFIDENCE_LEVEL}_toAlignWithWT.fasta")
+        of = open(wt_fasta_name, "w")
 
-            align_len = len(list(alignment.items())[0][1])
-            stats = dict()
-            for pos in range(align_len):
-                stats[str(pos)] = {aa: 0 for aa in aa_to_idx}
-                stats[str(pos)]["-"] = 0
-            # Count occurrences
-            for seq in alignment.values():
-                for pos_i, pos in enumerate(seq):
-                    stats[str(pos_i)][pos] += 1
+        of.write(">wt_{}\n".format(protein))
+        of.write(wt.replace("-", ""))
+        of.write(">predicted_{}\n".format(aa_id))
+        of.write(predicted_sequence.replace("-", ""))
+        of.write("\n")
+        of.close()
 
-            result_dict = dict()
-            result_dict["total"] = TREE_CNT
-            predicted_sequence = ""
-            for pos, vals in stats.items():
-                ordered_level = {k: v for k, v in sorted(vals.items(), key=lambda item: item[1])}
-                result_dict[pos] = list(list(ordered_level.items())[-1])
-                predicted_sequence += list(ordered_level.items())[-1][0]
-            df = pd.DataFrame.from_dict(result_dict)
-            df.to_csv(tmp_dir + "{}_average_{}.csv".format(aa_id, CONFIDENCE_LEVEL))
+        msa_comparison = os.path.join(level2_dir, "{}_{}_comparison.fasta".format(aa_id, CONFIDENCE_LEVEL))
+        os.system("clustalo -i " + wt_fasta_name + " -o " + msa_comparison + " --force")
 
-            # compare with WT
-            wt_fasta_name = aa_id + "_{}_toAlignWithWT.fasta".format(CONFIDENCE_LEVEL)
-            of = open(tmp_dir + wt_fasta_name, "w")
-
-            of.write(">wt_{}\n".format(protein))
-            of.write(wt.replace("-", ""))
-            of.write(">predicted_{}\n".format(aa_id))
-            of.write(predicted_sequence.replace("-", ""))
-            of.write("\n")
-            of.close()
-
-            msa_comparison = "{}_{}_comparison.fasta".format(aa_id, CONFIDENCE_LEVEL)
-            os.system("clustalo -i " + tmp_dir + wt_fasta_name + " -o " + tmp_dir + msa_comparison + " --force")
-
-            # create statistics for indices
-            mf = open(tmp_dir + msa_comparison)
-            alignment_comp = dict()
-            loading_sequence = ""
-            for line in mf.readlines():
-                line = line.strip()
-                if line == "" or line == "\n":
-                    if loading_sequence != "":
-                        alignment_comp[seq_name] = loading_sequence
-                    continue
-                if line[0] == ">":
-                    if loading_sequence == "":
-                        seq_name = line[1:]
-                        continue
+        # create statistics for indices
+        mf = open(level2_dir + msa_comparison)
+        alignment_comp = dict()
+        loading_sequence = ""
+        for line in mf.readlines():
+            line = line.strip()
+            if line == "" or line == "\n":
+                if loading_sequence != "":
                     alignment_comp[seq_name] = loading_sequence
-                    loading_sequence = ""
+                continue
+            if line[0] == ">":
+                if loading_sequence == "":
                     seq_name = line[1:]
                     continue
-                loading_sequence += line
-            mf.close()
-            # Last sequence not in
-            alignment_comp[seq_name] = loading_sequence
+                alignment_comp[seq_name] = loading_sequence
+                loading_sequence = ""
+                seq_name = line[1:]
+                continue
+            loading_sequence += line
+        mf.close()
+        # Last sequence not in
+        alignment_comp[seq_name] = loading_sequence
 
-            comparison_dict = {"Notes": [
-                "{}".format(protein),
-                "prediction",
-                "{} index similarity".format(aa_id)]}
+        comparison_dict = {"Notes": [
+            "{}".format(protein),
+            "prediction",
+            "{} index similarity".format(aa_id)]}
 
-            wt_al, pred = list(alignment_comp.values())  # just 2 sequence in there
-            for pos_i, (w, p) in enumerate(zip(wt_al, pred)):
-                if w == "-" or p == "-":
-                    d = ""
-                else:
-                    d = aa_ind_matrixes[aa_id][aa_to_idx[w]][aa_to_idx[p]]
-                comparison_dict[pos_i] = [w, p, d]
+        wt_al, pred = list(alignment_comp.values())  # just 2 sequence in there
+        for pos_i, (w, p) in enumerate(zip(wt_al, pred)):
+            if w == "-" or p == "-":
+                d = ""
+            else:
+                d = aa_ind_matrixes[aa_id][aa_to_idx[w]][aa_to_idx[p]]
+            comparison_dict[pos_i] = [w, p, d]
 
-            # metric statistics
-            metrics_dict = {"Notes": ['Sequence',
-                                      f'{protein}', 'consensus freq',
-                                      'mean r2', 'std r2', 'r2 max min', 'r2 N',
-                                      'mean slope', 'std slope', 'slope max min',
-                                      'slope N', ""]}
+        # metric statistics
+        metrics_dict = {"Notes": ['Sequence',
+                                  f'{protein}', 'consensus freq',
+                                  'mean r2', 'std r2', 'r2 max min', 'r2 N',
+                                  'mean slope', 'std slope', 'slope max min',
+                                  'slope N', ""]}
 
-            metrics_dict["Notes"].extend(['tree{}, (R,Sl,AA,S,F,B,P,G)'.format(t_n) for t_n in range(TREE_CNT)])
+        metrics_dict["Notes"].extend(['tree{}, (R,Sl,AA,S,F,B,P,G)'.format(t_n) for t_n in range(tree_cnt)])
 
-            metrics_stats_r2, r2_col_vals, voting_predictions = create_stats_with_metric2(metrics["r2"][aa_id],
-                                                                                          alignment, trees_map_to_msa,
-                                                                                          over_tree_msa_len)
-            # voting is same for
-            metrics_stats_slope, col_vals, _ = create_stats_with_metric2(metrics["slope"][aa_id], alignment,
-                                                                         trees_map_to_msa, over_tree_msa_len)
+        metrics_stats_r2, r2_col_vals, voting_predictions = create_stats_with_metric2(metrics["r2"][aa_id],
+                                                                                      alignment, trees_map_to_msa,
+                                                                                      msa_len)
+        # voting is same for
+        metrics_stats_slope, col_vals, _ = create_stats_with_metric2(metrics["slope"][aa_id], alignment,
+                                                                     trees_map_to_msa, msa_len)
 
-            trends = sequence_trend_metrics(metrics, aa_id, trees_map_to_msa, over_tree_msa_len)
-            aligned_wt = ""
-            no_gaps_idx = 0
-            for pos_i in range(over_tree_msa_len):
-                seq_aa = predicted_sequence[pos_i]
-                wt_res = ''
-                if seq_aa != '-':
-                    wt_res = wt_al[no_gaps_idx]
-                    no_gaps_idx += 1
+        trends = sequence_trend_metrics(metrics, aa_id, trees_map_to_msa, msa_len)
+        aligned_wt = ""
+        no_gaps_idx = 0
+        for pos_i in range(msa_len):
+            seq_aa = predicted_sequence[pos_i]
+            wt_res = ''
+            if seq_aa != '-':
+                wt_res = wt_al[no_gaps_idx]
+                no_gaps_idx += 1
 
-                aligned_wt += "-" if wt_res == '' else wt_res
+            aligned_wt += "-" if wt_res == '' else wt_res
 
-                voted_aa, voted_freq = voting_by_prediction(voting_predictions[pos_i])
+            voted_aa, voted_freq = voting_by_prediction(voting_predictions[pos_i])
 
-                col_trends = trends[pos_i]
-                mean, met_stddev, met_max, met_min, cnt = metrics_stats_r2[pos_i]
-                mean_s, met_stddev_s, met_max_s, met_min_s, cnt_s = metrics_stats_slope[pos_i]
-                col_csv_val = [seq_aa, wt_res, f"{voted_aa}, {voted_freq}",
-                               "{:.3f}".format(mean), "{:.3f}".format(met_stddev),
-                               "{:.3f}, {:.3f}".format(met_max, met_min), cnt,
-                               "{:.3f}".format(mean_s), "{:.3f}".format(met_stddev_s),
-                               "{:.3f}, {:.3f}".format(met_max_s, met_min_s), cnt_s,
-                               ""]
+            col_trends = trends[pos_i]
+            mean, met_stddev, met_max, met_min, cnt = metrics_stats_r2[pos_i]
+            mean_s, met_stddev_s, met_max_s, met_min_s, cnt_s = metrics_stats_slope[pos_i]
+            col_csv_val = [seq_aa, wt_res, f"{voted_aa}, {voted_freq}",
+                           "{:.3f}".format(mean), "{:.3f}".format(met_stddev),
+                           "{:.3f}, {:.3f}".format(met_max, met_min), cnt,
+                           "{:.3f}".format(mean_s), "{:.3f}".format(met_stddev_s),
+                           "{:.3f}, {:.3f}".format(met_max_s, met_min_s), cnt_s,
+                           ""]
 
-                cons_score = None
+            cons_score = None
 
-                tree_records = ["{:.3f}, {:.3f}, {}".format(r2[0], sl[0], sl[1]) for r2, sl in zip(r2_col_vals[pos_i],
-                                                                                                   col_vals[pos_i])]
-                for trend_i in range(TREE_CNT):
-                    trend = col_trends[trend_i]
-                    tree_records[trend_i] += f", {trend[0]}, {trend[1]}, {trend[2]}, {trend[3]}, {trend[4]}, " \
-                                             f"plot_col_{trend[5]}"
-                col_csv_val.extend(tree_records)
-                metrics_dict[pos_i] = col_csv_val
+            tree_records = ["{:.3f}, {:.3f}, {}".format(r2[0], sl[0], sl[1]) for r2, sl in zip(r2_col_vals[pos_i],
+                                                                                               col_vals[pos_i])]
+            for trend_i in range(tree_cnt):
+                trend = col_trends[trend_i]
+                tree_records[trend_i] += f", {trend[0]}, {trend[1]}, {trend[2]}, {trend[3]}, {trend[4]}, " \
+                                         f"plot_col_{trend[5]}"
+            col_csv_val.extend(tree_records)
+            metrics_dict[pos_i] = col_csv_val
 
-            best_met, positions, aa_stats = detect_best_metric(trends, alignment, aligned_wt, len(metrics_dict[0]), protein,
-                                                               cons_score)
-            indices_stats[aa_id] = aa_stats
+        best_met, positions, aa_stats = detect_best_metric(trends, alignment, aligned_wt, len(metrics_dict[0]), protein,
+                                                           cons_score)
+        indices_stats[aa_id] = aa_stats
 
-            df = pd.DataFrame.from_dict(comparison_dict)
-            df.to_csv(tmp_dir + "{}_averageWT_{}.csv".format(aa_id, CONFIDENCE_LEVEL))
+        df = pd.DataFrame.from_dict(comparison_dict)
+        df.to_csv(level2_dir + "{}_averageWT_{}.csv".format(aa_id, CONFIDENCE_LEVEL))
 
-            # append the best metrics dict to csv
-            metrics_dict.update(best_met)
+        # append the best metrics dict to csv
+        metrics_dict.update(best_met)
 
-            if protein == "P0A8U6":
-                metrics_dict.update(positions)
+        if protein == "P0A8U6":
+            metrics_dict.update(positions)
 
-            max_len = max([len(x) for _, x in metrics_dict.items()])
+        max_len = max([len(x) for _, x in metrics_dict.items()])
 
-            # add lines to dictionary to solve error of different line count
-            for k, ls in metrics_dict.items():
-                rows_missing = max_len - len(ls)
-                filling = ["" for _ in range(rows_missing)]
-                ls.extend(filling)
-
-            df = pd.DataFrame.from_dict(metrics_dict)
-            df.to_csv(gen_dir + "{}_metrics_{}.csv".format(aa_id, CONFIDENCE_LEVEL))
-
-            # store final
-            final_seq = "{}_FINAL_SEQUENCE_{}.fasta".format(aa_id, CONFIDENCE_LEVEL)
-            mf = open(gen_dir + final_seq, "w")
-            mf.write(pred.replace("-", ""))
-            mf.close()
-
-        # fill up stats with blank cells
-        max_len = max([len(x) for _, x in indices_stats.items()])
-        for k, s in indices_stats.items():
-            rows_missing = max_len - len(s)
+        # add lines to dictionary to solve error of different line count
+        for k, ls in metrics_dict.items():
+            rows_missing = max_len - len(ls)
             filling = ["" for _ in range(rows_missing)]
-            s.extend(filling)
+            ls.extend(filling)
 
-        df = pd.DataFrame.from_dict(indices_stats)
-        df.to_csv(tmp_dir + "indices_transitions{}.csv".format(CONFIDENCE_LEVEL))
-        with open(tmp_dir + "indices_transitions{}.pkl".format(CONFIDENCE_LEVEL), "wb") as f:
-            pickle.dump(indices_stats, f)
+        df = pd.DataFrame.from_dict(metrics_dict)
+        df.to_csv(gen_dir + "{}_metrics_{}.csv".format(aa_id, CONFIDENCE_LEVEL))
+
+        # store final
+        final_seq = "{}_FINAL_SEQUENCE_{}.fasta".format(aa_id, CONFIDENCE_LEVEL)
+        mf = open(gen_dir + final_seq, "w")
+        mf.write(pred.replace("-", ""))
+        mf.close()
+
+    # fill up stats with blank cells
+    max_len = max([len(x) for _, x in indices_stats.items()])
+    for k, s in indices_stats.items():
+        rows_missing = max_len - len(s)
+        filling = ["" for _ in range(rows_missing)]
+        s.extend(filling)
+
+    df = pd.DataFrame.from_dict(indices_stats)
+    df.to_csv(level2_dir + "indices_transitions{}.csv".format(CONFIDENCE_LEVEL))
+    with open(level2_dir + "indices_transitions{}.pkl".format(CONFIDENCE_LEVEL), "wb") as f:
+        pickle.dump(indices_stats, f)

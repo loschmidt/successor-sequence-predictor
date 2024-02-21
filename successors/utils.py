@@ -20,7 +20,7 @@ def load_msa(msa_file_path: str) -> MSA_GAP_LEN:
                 sequences[name] = act
                 if length == 0:
                     length = len(act)
-            name = line
+            name = line[1:]
             act = ""
         else:
             act += line

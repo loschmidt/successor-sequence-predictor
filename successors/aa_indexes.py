@@ -147,7 +147,7 @@ def prepare_indices(run: RunSetup):
         pickle.dump(file_names, f)
 
     indices = [d["record"] for d in aa_idxs]
-    with open(os.path.join("aa_indice_names.pkl"), "wb") as f:
+    with open(os.path.join(run.index_fld, "aa_indice_names.pkl"), "wb") as f:
         pickle.dump(indices, f)
 
     data = dict()
@@ -180,5 +180,5 @@ def prepare_wt_sequence(run: RunSetup):
     query = sequences[run.query]
     query = query.replace("-", "")
     ground_truth_file = os.path.join(run.ground_truth, run.protein_name)
-    store_msa(str(ground_truth_file), {"run.query": query})
+    store_msa(str(ground_truth_file), {f"{run.query}": query})
     print("Preparation of WT ground truth sequence DONE")

@@ -20,7 +20,7 @@ def cli():
 
 @cli.command(name='predict')
 @click.argument('file_path')
-def predict(file_path):
+def predict_cli(file_path):
     """ Setup indexes you want to use during analysis """
     print("Predicting successor sequences")
     try:
@@ -38,7 +38,7 @@ def predict(file_path):
 @click.argument('file_path')
 def level2(file_path):
     """ Predict successor sequences based on the given AA indices over all trees"""
-    print("Predicting successor from indices per tree")
+    print("Predicting successor from trees per AA index")
     try:
         run = RunSetup(file_path)
         print(" Target directory: {}".format(run.out_dir))

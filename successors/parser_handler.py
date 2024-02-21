@@ -24,7 +24,7 @@ class RunSetup:
                 exit(1)
 
         # setup directory structure if needed
-        directories = ["tmp_files", "results", "config", "logs"]
+        directories = ["tmp_files", "results", "config", "logs", "index_fld", "ground_truth", "fasta"]
         for exp_dir in directories:
             attr_dir = os.path.join(conf['out_dir'], exp_dir)
             os.makedirs(attr_dir, exist_ok=True)

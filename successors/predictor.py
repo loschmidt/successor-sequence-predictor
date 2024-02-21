@@ -15,6 +15,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
 from successors.parser_handler import RunSetup
+from successors.utils import load_msa
 
 target_vec = ""
 
@@ -204,7 +205,7 @@ def predict_tree_successor(lineage_sequences: LINEAGE_SEQUENCES, features: AA_IN
 
     # create a file for individual candidates 3 best candidates
     for pred_i in range(3):
-        prediction_file_path = os.path.join(tree_dir , "prediction_indices_{}.fasta".format(pred_i))
+        prediction_file_path = os.path.join(tree_dir, "prediction_indices_{}.fasta".format(pred_i))
         ot = open(prediction_file_path, "w")
         for k, seq in indices_pred.items():
             ot.write(">{}\n".format(k))
@@ -265,23 +266,25 @@ def tree_wise_predictions(features: AA_INDICES, trees: TREE_PATHS, run: RunSetup
 
 
 def get_tree_lineage_sequences(dataset_tree_path: str, run: RunSetup) -> LINEAGE_SEQUENCES:
-    sequences = dict()
-    length = 0
-    dt = open(dataset_tree_path + "/msa.fasta")
-    name = ""
-    act = ""
-    for line in dt.readlines():
-        line = line.strip()
-        if line[0] == '>':
-            if name != "":
-                sequences[name] = act
-                if length == 0:
-                    length = len(act)
-            name = line
-            act = ""
-        else:
-            act += line
-    sequences[name] = act
+    # sequences = dict()
+    # length = 0
+    # dt = open(dataset_tree_path + "/msa.fasta")
+    # name = ""
+    # act = ""
+    # for line in dt.readlines():
+    #     line = line.strip()
+    #     if line[0] == '>':
+    #         if name != "":
+    #             sequences[name] = act
+    #             if length == 0:
+    #                 length = len(act)
+    #         name = line
+    #         act = ""
+    #     else:
+    #         act += line
+    # sequences[name] = act
+
+    sequences, length = load_msa(os.path.join(dataset_tree_path, "msa.fasta"))
 
     tree = Phylo.read(dataset_tree_path + "/ancestralTree.tree", "newick")
 
@@ -333,6 +336,7 @@ def predict(run_config: RunSetup) -> None:
     log_msg = tree_wise_predictions(features, trees, run_config)
     print(log_msg)
     log_file.write(log_msg)
+
 
 def get_indices_features(run_config: RunSetup) -> Tuple[AA_INDICES, str]:
     """

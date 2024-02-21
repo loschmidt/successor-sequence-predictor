@@ -7,6 +7,8 @@ FireProt tool
 
 ## Installation
 
+Please install clustalo to your system simply running `sudo apt-get -y install clustalo`
+
 **These instructions assume you have the python package manager `conda` installed.**
 
 Go to the directory where you wish to have your project be stored and run

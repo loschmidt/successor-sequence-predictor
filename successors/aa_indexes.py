@@ -1,14 +1,19 @@
-__author__ = "Pavel Kohout xkohou15@stud.fit.vutbr.cz"
-__date__ = "08-15-2022"
+__author__ = "Pavel Kohout xkohou15@vutbr.cz"
+__date__ = "20/02/2024"
 __description__ = "prepare AA indexes ranges"
 
-
+import glob
+import os
 import pickle
 import numpy as np
 import pandas as pd
 import seaborn as sn
 from scipy.spatial import distance_matrix
 
+from successors.parser_handler import RunSetup
+from successors.utils import load_msa, store_msa
+
+# Hardcoded index values
 aa_idx1 = {
     "record":  "DAWD720101",
     "name": "size.pkl",
@@ -93,45 +98,87 @@ aa_idx12 = {
     "Q": 5.65, "S": 5.68, "E": 3.22, "T": 5.66, "G": 5.97, "W": 5.89, "H": 7.59, "Y": 5.66, "I": 6.02, "V": 5.96
 }
 
-aa_idxs = [aa_idx2, aa_idx3, aa_idx5, aa_idx6, aa_idx8, aa_idx9, aa_idx10, aa_idx11, aa_idx12]
+################################
+# HOW TO ADD CUSTOM INDEX FOR ANALYSIS
+# custom_aa_idx12 = {  ADD IT TO ALL_INDS
+#     "record":  "CUSTOM",
+#     "name": "custom.pkl",
+#     "A": 6.0, "L": 5.98, "R": 10.76, "K": 9.74, "N": 5.41, "M": 5.74, "D": 2.77, "F": 5.48, "C": 5.05, "P": 6.3,
+#     "Q": 5.65, "S": 5.68, "E": 3.22, "T": 5.66, "G": 5.97, "W": 5.89, "H": 7.59, "Y": 5.66, "I": 6.02, "V": 5.96
+# }
 
-# for each index create matrix of distances and percentage similarities
-alphabet = ["A", "L", "R", "K", "N", "M", "D", "F", "C", "P", "Q", "S", "E", "T", "G", "W", "H", "Y", "I", "V"]
-alphabet_idx = {}
-for i, a in enumerate(alphabet):
-    alphabet_idx[a] = i
-with open("./aa_index_confidence/aa_idx.pkl", "wb") as f:
-    pickle.dump(alphabet_idx, f)
+################################
+# HOW TO ADD CUSTOM INDEX FOR ANALYSIS
+# Please add index here when extending those above
+ALL_INDS = [aa_idx1, aa_idx2, aa_idx3, aa_idx4, aa_idx5, aa_idx6, aa_idx7, aa_idx8, aa_idx9, aa_idx10,
+            aa_idx11, aa_idx12]
 
 
-for aa_idx in aa_idxs:
-    aa_vals = [[aa_idx[k]] for k in alphabet]
-    matrix = distance_matrix(aa_vals, aa_vals)
-    matrix = 1.0 - (matrix / np.max(matrix))
+def prepare_indices(run: RunSetup):
+    """ Preprocess indices file by the selection in config file """
+    log_msg = "Indices tmp file preparation \n"
+    aa_idxs = []
+    for aa_index in ALL_INDS:
+        if aa_index['record'] in run.indices:
+            aa_idxs.append(aa_index)
+        else:
+            log_msg += f"   The index {aa_index['record']} is excluded from analysis \n"
 
-    with open("./aa_index_confidence/" + aa_idx["name"], "wb") as f:
-        pickle.dump(matrix, f)
-    print("=" * 80)
-    print(aa_idx["name"])
-    print()
+    # for each index create matrix of distances and percantage similarities
+    alphabet = ["A", "L", "R", "K", "N", "M", "D", "F", "C", "P", "Q", "S", "E", "T", "G", "W", "H", "Y", "I", "V"]
+    alphabet_idx = {}
+    for i, a in enumerate(alphabet):
+        alphabet_idx[a] = i
+    with open(os.path.join(run.index_fld, "aa_idx.pkl"), "wb") as f:
+        pickle.dump(alphabet_idx, f)
 
-file_names = [d["name"] for d in aa_idxs]
-with open("./aa_index_confidence/file_names.pkl", "wb") as f:
-    pickle.dump(file_names, f)
+    for aa_idx in aa_idxs:
+        aa_vals = [[aa_idx[k]] for k in alphabet]
+        matrix = distance_matrix(aa_vals, aa_vals)
+        matrix = 1.0 - (matrix / np.max(matrix))
 
-indices = [d["record"] for d in aa_idxs]
-with open("./aa_index_confidence/aa_indice_names.pkl", "wb") as f:
-    pickle.dump(indices, f)
+        with open(os.path.join(run.index_fld, aa_idx["name"]), "wb") as f:
+            pickle.dump(matrix, f)
+        log_msg += "=" * 80 + "\n"
+        log_msg += aa_idx["name"] + "\n"
 
-data = dict()
-for ind in aa_idxs:
-    # name = ind['name'].split(".")[0]
-    name = ind['record']
-    data[name] = [ind[v] for v in alphabet]
+    file_names = [d["name"] for d in aa_idxs]
+    with open(os.path.join(run.index_fld, "file_names.pkl"), "wb") as f:
+        pickle.dump(file_names, f)
 
-df = pd.DataFrame(data)
-corr_matrix = df.corr()
-svm = sn.heatmap(corr_matrix, annot=True)
-svm.figure.tight_layout()
-figure = svm.get_figure()
-figure.savefig('./aa_index_confidence/corr_matrix_ind.png', dpi=400)
+    indices = [d["record"] for d in aa_idxs]
+    with open(os.path.join("aa_indice_names.pkl"), "wb") as f:
+        pickle.dump(indices, f)
+
+    data = dict()
+    for ind in aa_idxs:
+        name = ind['record']
+        data[name] = [ind[v] for v in alphabet]
+
+    df = pd.DataFrame(data)
+    corr_matrix = df.corr()
+    svm = sn.heatmap(corr_matrix, annot=True)
+    svm.figure.tight_layout()
+    figure = svm.get_figure()
+    figure.savefig(os.path.join(run.index_fld, 'corr_matrix_ind.png'), dpi=400)
+
+    print(log_msg)
+    log_file_path = os.path.join(run.logs, "log_indices.txt")
+    log_file = open(log_file_path, "w")
+    log_file.write(log_msg)
+
+
+def prepare_wt_sequence(run: RunSetup):
+    """Generate file with a wild type sequence"""
+    input_pattern = os.path.join(run.input, '*')
+    trees = glob.glob(input_pattern)
+
+    tree_fld = trees[0]
+    msa_file_path = os.path.join(tree_fld, "msa.fasta")
+
+    sequences, _ = load_msa(msa_file_path)
+    query = sequences[run.query]
+    query = query.replace("-", "")
+    ground_truth_file = os.path.join(run.ground_truth, run.protein_name)
+    store_msa(str(ground_truth_file), {"run.query": query})
+    print("Preparation of WT ground truth sequence DONE")

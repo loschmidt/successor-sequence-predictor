@@ -96,3 +96,6 @@ so one can examine why the given suggestion appeared.
 ##### Final consensus sequence
 The final consensus over all indices and trees can be found in `/path/to/output/dir/results/final_majority_consensus.fasta` 
 along with a wild type sequence for comparison. 
+Please note
+that a final consensus sequence may vary over multiple iterations
+in case there are two similar AA frequencies for particular position.  

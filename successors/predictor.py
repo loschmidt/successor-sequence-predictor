@@ -271,24 +271,6 @@ def tree_wise_predictions(features: AA_INDICES, trees: TREE_PATHS, run: RunSetup
 
 
 def get_tree_lineage_sequences(dataset_tree_path: str, run: RunSetup) -> LINEAGE_SEQUENCES:
-    # sequences = dict()
-    # length = 0
-    # dt = open(dataset_tree_path + "/msa.fasta")
-    # name = ""
-    # act = ""
-    # for line in dt.readlines():
-    #     line = line.strip()
-    #     if line[0] == '>':
-    #         if name != "":
-    #             sequences[name] = act
-    #             if length == 0:
-    #                 length = len(act)
-    #         name = line
-    #         act = ""
-    #     else:
-    #         act += line
-    # sequences[name] = act
-
     sequences, length = load_msa(os.path.join(dataset_tree_path, "msa.fasta"))
 
     tree = Phylo.read(dataset_tree_path + "/ancestralTree.tree", "newick")
@@ -301,14 +283,12 @@ def get_tree_lineage_sequences(dataset_tree_path: str, run: RunSetup) -> LINEAGE
         path = tree.get_path(clade)
         if query_name.lower() in str(path[-1]).lower():
             for cl in path:
-                # nodes.append(">ancestral_" + str(cl.confidence))
                 nodes.append("ancestral_" + str(cl.confidence))
             nodes[-1] = path[-1].name
-            # nodes[-1] = ">" + path[-1].name
             target_vec = sequences[nodes[-1]]
             if run.validation:
-                nodes = nodes[:-1]  # hide leave node as target TODO check it twice
-            print(nodes)
+                nodes = nodes[:-1]  # hide leave node as target
+            print("Evolutionary trajectory Root -> Leaf:", nodes)
             break
     # get a list of AA symbols from root to the query leaf for each column in MSA
     vectors = list()

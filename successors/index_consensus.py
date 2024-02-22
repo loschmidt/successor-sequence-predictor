@@ -203,11 +203,6 @@ def detect_best_metric(trends, trees_msa, aligned_wt, dict_line_cnt, protein, ru
     # for visualization purposes if alignment is not well aligned at the beginning just for visualization no for prediction
     if run.conservation_offset:
         conservations = ['' for _ in range(int(run.conservation_offset))] + conservations
-    # if not conservations:
-    #     conservations = [0 for _ in range(1000)]  # fill it to make code clear
-    # else:  # apply offset
-    #     off_cons = {"P0ACI0": 2, "P0A8U6": 1}[protein]
-    #     conservations = ['' for _ in range(off_cons)] + conservations
 
     # convert MSA dict to array
     msa_index_list = list()
@@ -326,10 +321,7 @@ def predict_level2(run: RunSetup):
 
     CONFIDENCE_LEVEL = run.confidence_level
     # prepare csv files for every
-    # for protein in proteins:
-    # gen_dir = f"outputs/{protein}/level2/" os.path.join()
-    # os.makedirs(gen_dir, exist_ok=True)
-    level2_dir = os.path.join(run.results, "level2")  # f"outputs/{protein}/level2/script_tmp/"
+    level2_dir = os.path.join(run.results, "level2")
     os.makedirs(level2_dir, exist_ok=True)
 
     log_msg += "CONFIDENCE LEVEL {}".format(CONFIDENCE_LEVEL)+"\n"
@@ -422,40 +414,6 @@ def predict_level2(run: RunSetup):
         }
 
         alignment_comp, comp_msa_len = clustalo_sequences(wt_predicted_fasta_path, msa_wt_comparison, wt_predicted_fasta)
-        # of = open(wt_predicted_fasta_path, "w")
-        #
-        # of.write(">wt_{}\n".format(protein))
-        # of.write(wt.replace("-", ""))
-        # of.write(">predicted_{}\n".format(aa_id))
-        # of.write(predicted_sequence.replace("-", ""))
-        # of.write("\n")
-        # of.close()
-
-
-        # os.system("clustalo -i " + wt_fasta_name + " -o " + msa_wt_comparison + " --force")
-
-        # create statistics for indices
-        # mf = open(level2_dir + msa_comparison)
-        # alignment_comp = dict()
-        # loading_sequence = ""
-        # for line in mf.readlines():
-        #     line = line.strip()
-        #     if line == "" or line == "\n":
-        #         if loading_sequence != "":
-        #             alignment_comp[seq_name] = loading_sequence
-        #         continue
-        #     if line[0] == ">":
-        #         if loading_sequence == "":
-        #             seq_name = line[1:]
-        #             continue
-        #         alignment_comp[seq_name] = loading_sequence
-        #         loading_sequence = ""
-        #         seq_name = line[1:]
-        #         continue
-        #     loading_sequence += line
-        # mf.close()
-        # # Last sequence not in
-        # alignment_comp[seq_name] = loading_sequence
 
         ######################################################
         # Now proceed logic for generation of a statistic report with sequentiality fluctuation per AA aligned to wt
@@ -516,8 +474,6 @@ def predict_level2(run: RunSetup):
                            "{:.3f}".format(mean_s), "{:.3f}".format(met_stddev_s),
                            "{:.3f}, {:.3f}".format(met_max_s, met_min_s), cnt_s,
                            ""]
-
-            cons_score = None
 
             tree_records = ["{:.3f}, {:.3f}, {}".format(r2[0], sl[0], sl[1]) for r2, sl in zip(r2_col_vals[pos_i],
                                                                                                col_vals[pos_i])]

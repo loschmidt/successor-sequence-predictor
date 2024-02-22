@@ -46,6 +46,12 @@ cp successors/configs/config_template.yaml my_cofig.yaml
 Set all fields by current experiment requirements, e.g. set out dir
 All supported options and their descriptions for a running pipeline can be found there.
 
+It is worth mentioning, that `transition` option set to **YES** can case 'no mutational design' 
+for shallow phylogenetic trees (algorithm then applies prediction for evolutionary position with three or more 
+transitions as we consider this as a strong evolutionary signal). 
+
+For deep trees, `transition` option set to **NO** can cause to noisy sequence generation for deep trees (seven and more node from root to leaf).
+
 #### Dataset description
 Scripts account for the dataset folder structure, set in `input` config parameter, as following:
 1. each tree has a separate folder (tree1, tree2 ...) 
@@ -53,11 +59,8 @@ Scripts account for the dataset folder structure, set in `input` config paramete
    1. **msa.fasta**: whole tree MSA or just sequences on the tree trajectory from the root to the 'query'
    2. **ancestralTree.tree**: newick format of the phylogenetic tree
 
-It is worth mentioning, that `transition` option set to **YES** can case 'no mutational design' 
-for shallow phylogenetic trees (algorithm then applies prediction for evolutionary position with three or more 
-transitions as we consider this as a strong evolutionary signal). 
-
-For deep trees, `transition` option set to **NO** can cause to noisy sequence generation for deep trees (seven and more node from root to leaf).
+#### Adding custom AA Index
+To add custom index to the study, one must append AA-wise index values to `successors/indices/aaindex.csv` and `successors/aa_indexes.py` files.
 
 ## Running
 
@@ -98,4 +101,7 @@ The final consensus over all indices and trees can be found in `/path/to/output/
 along with a wild type sequence for comparison. 
 Please note
 that a final consensus sequence may vary over multiple iterations
-in case there are two similar AA frequencies for particular position.  
+in case there are two similar AA frequencies for particular position. 
+
+
+

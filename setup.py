@@ -38,11 +38,11 @@ setup(
     install_requires=[
         "click~=8.0.4",
         "pyyaml~=6.0",
-        "numpy~=1.24.3",
+        "numpy==1.26.4",
         "scipy==1.10.1",
         "scikit-learn~=1.3.0",
         "BioPython",
-        "seaborn~=0.10.1",
+        "seaborn~=0.13",
         "setuptools~=67.8.0"
     ],
     entry_points={

@@ -31,7 +31,13 @@ def log_prediction(run_config: RunSetup, trees: int) -> str:
 
 
 def linage_trend(feature_vals):
-    """ Create sequencetiality measurement for lineage, return sequenciality, sequenciality2, fluctuation"""
+    """
+    Create sequentiality measurement for lineage, return sequentiality, sequentiality2, fluctuation
+    fluctuation: tells us the ratio between the transitions in the lineage and original AA
+    sequentiality:
+        1 - all ordered pairs of lineage transitions are increasing (strong positive trend in given AA index)
+        -1 - all ordered pairs of lineage are decreasing (strong negative trend)
+    """
     # group by following same AAs, e.g. AABBBCDD -> ABCD
     grouped = [feature_vals[0]] + [val for i, val in enumerate(feature_vals[1:]) if val != feature_vals[i]]
     fluctuation = 100 * len(set(grouped)) / len(grouped)  # originality of AA in lineage
@@ -50,7 +56,7 @@ def linage_trend(feature_vals):
         return 0, 0, 0
     sequential_trend = (100 * sequential_trend_sum) / len(pairs)
 
-    # check whether there are break in trend for last transitions
+    # check whether there are break in trend for last transitions, break example: 1, 2, 1 (last AA breaks the trend)
     if len(grouped) < 3:
         sequential_trend_break = -1  # nothing to detect
     else:
@@ -295,11 +301,14 @@ def get_tree_lineage_sequences(dataset_tree_path: str, run: RunSetup) -> LINEAGE
         path = tree.get_path(clade)
         if query_name.lower() in str(path[-1]).lower():
             for cl in path:
-                nodes.append(">ancestral_" + str(cl.confidence))
-            nodes[-1] = ">" + path[-1].name
+                # nodes.append(">ancestral_" + str(cl.confidence))
+                nodes.append("ancestral_" + str(cl.confidence))
+            nodes[-1] = path[-1].name
+            # nodes[-1] = ">" + path[-1].name
             target_vec = sequences[nodes[-1]]
             if run.validation:
                 nodes = nodes[:-1]  # hide leave node as target TODO check it twice
+            print(nodes)
             break
     # get a list of AA symbols from root to the query leaf for each column in MSA
     vectors = list()

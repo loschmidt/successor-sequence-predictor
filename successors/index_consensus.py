@@ -87,6 +87,14 @@ def voting_by_prediction(predictions):
 
 
 def sequence_trend_metrics(metrics, feature, tree_map_to_msa, indice_msa_len):
+    """
+    Compute the metrics in the evolutionary trajectory
+    :param metrics:
+    :param feature:
+    :param tree_map_to_msa:
+    :param indice_msa_len:
+    :return:
+    """
     seq_data = metrics["sequence_trend"][feature]
     break_trend = metrics["sequence_trend_break"][feature]
     fluctuation = metrics["fluctuations"][feature]
@@ -95,7 +103,7 @@ def sequence_trend_metrics(metrics, feature, tree_map_to_msa, indice_msa_len):
     templates = []
     for msa_pos in range(indice_msa_len):
         # S,F,B,P,G, plot
-        template = [[0, 0, -1, 0, 0, -1] for _ in range(TREE_CNT)]
+        template = [[0, 0, -1, 0, 0, -1] for _ in range(len(tree_map_to_msa))]
         for tree_i, tree_msa_pos in enumerate(tree_map_to_msa):
             if msa_pos not in tree_msa_pos:
                 continue
@@ -181,7 +189,7 @@ def create_stats_with_metric2(trees_metric, trees_msa, tree_map_to_msa, msa_widt
     return metric_stats, vals_per_tree_per_col, voting_aa_over_prediction
 
 
-def detect_best_metric(trends, trees_msa, aligned_wt, dict_line_cnt, protein, conservations):
+def detect_best_metric(trends, trees_msa, aligned_wt, dict_line_cnt, protein, run):
     def calc_aa_in_lineage(n):
         aa_cnt, cumsum = 0, 0
         while True:
@@ -191,11 +199,15 @@ def detect_best_metric(trends, trees_msa, aligned_wt, dict_line_cnt, protein, co
             aa_cnt += 1
 
     # conservation
-    if not conservations:
-        conservations = [0 for _ in range(1000)]  # fill it to make code clear
-    else:  # apply offset
-        off_cons = {"P0ACI0": 2, "P0A8U6": 1}[protein]
-        conservations = ['' for _ in range(off_cons)] + conservations
+    conservations = [0 for _ in range(1000)]  # fill it to make code clear, allocate 1000 columns in csv
+    # for visualization purposes if alignment is not well aligned at the beginning just for visualization no for prediction
+    if run.conservation_offset:
+        conservations = ['' for _ in range(int(run.conservation_offset))] + conservations
+    # if not conservations:
+    #     conservations = [0 for _ in range(1000)]  # fill it to make code clear
+    # else:  # apply offset
+    #     off_cons = {"P0ACI0": 2, "P0A8U6": 1}[protein]
+    #     conservations = ['' for _ in range(off_cons)] + conservations
 
     # convert MSA dict to array
     msa_index_list = list()
@@ -205,7 +217,7 @@ def detect_best_metric(trends, trees_msa, aligned_wt, dict_line_cnt, protein, co
     best_dict = {"Individul trees": ["" for _ in range(dict_line_cnt)],
                  "Order": [], "Substitution": [], "Tree": [], "Sequentiality": [], "Fluctuation": [], "Break trend": [],
                  "N": [], "G": [], "AA CNT": [], "Conservation Score": []}
-    p0a8u6 = {"P0A8U6": ["" for _ in range(dict_line_cnt)],
+    custom_selection = {f"Custom {protein}": ["" for _ in range(dict_line_cnt)],
               "Order_2": [], "Substitution_2": [], "Tree_2": [], "Sequentiality_2": [], "Fluctuation_2": [],
               "Break trend_2": [],
               "N_2": [], "G_2": [], "AA CNT_2": [], "Conservation Score": []}
@@ -213,7 +225,7 @@ def detect_best_metric(trends, trees_msa, aligned_wt, dict_line_cnt, protein, co
     to_sort = list()
     regardless_break = list()
     indice_stats = list()
-    to_sort_pos = list()
+    custom_selection_positions = list()
     for msa_i, trees_data in enumerate(trends):
         for tree_i, data in enumerate(trees_data):
             # substitutions, tree
@@ -223,68 +235,68 @@ def detect_best_metric(trends, trees_msa, aligned_wt, dict_line_cnt, protein, co
             def_list.extend(data)
             def_list.extend([msa_i])
             indice_stats.append(def_list)
-            # positions targets
-            if protein == "P0A8U6":
-                if msa_i in [5, 26, 11, 75, 48, 3, 61]:
-                    to_sort_pos.append(def_list)
+            # positions targets for custom inspection
+            if msa_i in run.highlight_pos:  #[5, 26, 11, 75, 48, 3, 61]
+                custom_selection_positions.append(def_list)
             # remove all breaks trends or trend no detected at all
             if data[2] == 1 or data[2] == -1:
                 regardless_break.append(def_list)
                 continue
             to_sort.append(def_list)
 
-    samples = 35
+    samples = 20
     # sort by sequentiality, return 20 or less
-    best_20 = sorted(to_sort, key=lambda x: (x[2], x[3]), reverse=True)[:samples]
-    best_dict["Order"] = [i + 1 for i in range(len(best_20))]
-    best_dict["Substitution"] = [x[0] for x in best_20]
-    best_dict["Tree"] = [x[1] for x in best_20]
-    best_dict["Sequentiality"] = [x[2] for x in best_20]
-    best_dict["Fluctuation"] = [x[3] for x in best_20]
-    best_dict["Break trend"] = [x[4] if x[4] != -1 else False for x in best_20]
-    best_dict["N"] = [x[5] for x in best_20]
-    best_dict["G"] = [x[6] for x in best_20]
+    best_n = sorted(to_sort, key=lambda x: (x[2], x[3]), reverse=True)[:samples]
+    best_dict["Order"] = [i + 1 for i in range(len(best_n))]
+    best_dict["Substitution"] = [x[0] for x in best_n]
+    best_dict["Tree"] = [x[1] for x in best_n]
+    best_dict["Sequentiality"] = [x[2] for x in best_n]
+    best_dict["Fluctuation"] = [x[3] for x in best_n]
+    best_dict["Break trend"] = [x[4] if x[4] != -1 else False for x in best_n]
+    best_dict["N"] = [x[5] for x in best_n]
+    best_dict["G"] = [x[6] for x in best_n]
     best_dict["AA CNT"] = [calc_aa_in_lineage(n) for n in best_dict["N"]]
-    best_dict["Conservation Score"] = [conservations[x[7]] for x in best_20]
+    best_dict["Conservation Score"] = [conservations[x[7]] for x in best_n]
 
-    best_20 = sorted(regardless_break, key=lambda x: (x[2]), reverse=True)[:samples]
-    best_dict["Order"].extend([i + 1 for i in range(len(best_20))])
-    best_dict["Substitution"].extend([x[0] for x in best_20])
-    best_dict["Tree"].extend([x[1] for x in best_20])
-    best_dict["Sequentiality"].extend([x[2] for x in best_20])
-    best_dict["Fluctuation"].extend([x[3] for x in best_20])
-    best_dict["Break trend"].extend([x[4] if x[4] != -1 else False for x in best_20])
-    best_dict["N"].extend([x[5] for x in best_20])
-    best_dict["G"].extend([x[6] for x in best_20])
+    best_n = sorted(regardless_break, key=lambda x: (x[2]), reverse=True)[:samples]
+    best_dict["Order"].extend([i + 1 for i in range(len(best_n))])
+    best_dict["Substitution"].extend([x[0] for x in best_n])
+    best_dict["Tree"].extend([x[1] for x in best_n])
+    best_dict["Sequentiality"].extend([x[2] for x in best_n])
+    best_dict["Fluctuation"].extend([x[3] for x in best_n])
+    best_dict["Break trend"].extend([x[4] if x[4] != -1 else False for x in best_n])
+    best_dict["N"].extend([x[5] for x in best_n])
+    best_dict["G"].extend([x[6] for x in best_n])
     best_dict["AA CNT"].extend([calc_aa_in_lineage(n) for n in best_dict["N"][-samples:]])
-    best_dict["Conservation Score"].extend([conservations[x[7]] for x in best_20])
+    best_dict["Conservation Score"].extend([conservations[x[7]] for x in best_n])
 
-    best_20 = sorted(regardless_break, key=lambda x: (x[3]), reverse=True)[:samples]
-    best_dict["Order"].extend([i + 1 for i in range(len(best_20))])
-    best_dict["Substitution"].extend([x[0] for x in best_20])
-    best_dict["Tree"].extend([x[1] for x in best_20])
-    best_dict["Sequentiality"].extend([x[2] for x in best_20])
-    best_dict["Fluctuation"].extend([x[3] for x in best_20])
-    best_dict["Break trend"].extend([x[4] if x[4] != -1 else False for x in best_20])
-    best_dict["N"].extend([x[5] for x in best_20])
-    best_dict["G"].extend([x[6] for x in best_20])
+    best_n = sorted(regardless_break, key=lambda x: (x[3]), reverse=True)[:samples]
+    best_dict["Order"].extend([i + 1 for i in range(len(best_n))])
+    best_dict["Substitution"].extend([x[0] for x in best_n])
+    best_dict["Tree"].extend([x[1] for x in best_n])
+    best_dict["Sequentiality"].extend([x[2] for x in best_n])
+    best_dict["Fluctuation"].extend([x[3] for x in best_n])
+    best_dict["Break trend"].extend([x[4] if x[4] != -1 else False for x in best_n])
+    best_dict["N"].extend([x[5] for x in best_n])
+    best_dict["G"].extend([x[6] for x in best_n])
     best_dict["AA CNT"].extend([calc_aa_in_lineage(n) for n in best_dict["N"][-samples:]])
-    best_dict["Conservation Score"].extend([conservations[x[7]] for x in best_20])
+    best_dict["Conservation Score"].extend([conservations[x[7]] for x in best_n])
 
-    if len(to_sort_pos) > 0:
-        best_20 = sorted(to_sort_pos, key=lambda x: (x[2], x[3]), reverse=True)
-        p0a8u6["Order_2"] = [i + 1 for i in range(len(best_20))]
-        p0a8u6["Substitution_2"] = [x[0] for x in best_20]
-        p0a8u6["Tree_2"] = [x[1] for x in best_20]
-        p0a8u6["Sequentiality_2"] = [x[2] for x in best_20]
-        p0a8u6["Fluctuation_2"] = [x[3] for x in best_20]
-        p0a8u6["Break trend_2"] = [x[4] if x[4] != -1 else False for x in best_20]
-        p0a8u6["N_2"] = [x[5] for x in best_20]
-        p0a8u6["G_2"] = [x[6] for x in best_20]
-        p0a8u6["AA CNT_2"] = [calc_aa_in_lineage(n) for n in p0a8u6["N_2"]]
-        p0a8u6["Conservation Score"] = [conservations[x[7]] for x in best_20]
+    # THIS IS CUSTOM HIGHLIGHT FOR SPECIAL POSITIONS WE ARE INTERESTED IN
+    if len(custom_selection_positions) > 0:
+        best_n = sorted(custom_selection_positions, key=lambda x: (x[2], x[3]), reverse=True)
+        custom_selection["Order_2"] = [i + 1 for i in range(len(best_n))]
+        custom_selection["Substitution_2"] = [x[0] for x in best_n]
+        custom_selection["Tree_2"] = [x[1] for x in best_n]
+        custom_selection["Sequentiality_2"] = [x[2] for x in best_n]
+        custom_selection["Fluctuation_2"] = [x[3] for x in best_n]
+        custom_selection["Break trend_2"] = [x[4] if x[4] != -1 else False for x in best_n]
+        custom_selection["N_2"] = [x[5] for x in best_n]
+        custom_selection["G_2"] = [x[6] for x in best_n]
+        custom_selection["AA CNT_2"] = [calc_aa_in_lineage(n) for n in custom_selection["N_2"]]
+        custom_selection["Conservation Score"] = [conservations[x[7]] for x in best_n]
         # print(len(to_sort_pos))
-    return best_dict, p0a8u6, indice_stats
+    return best_dict, custom_selection, indice_stats
 
 
 def predict_level2(run: RunSetup):
@@ -317,7 +329,7 @@ def predict_level2(run: RunSetup):
     # for protein in proteins:
     # gen_dir = f"outputs/{protein}/level2/" os.path.join()
     # os.makedirs(gen_dir, exist_ok=True)
-    level2_dir = os.path.join(run.tmp_files, "level2")  # f"outputs/{protein}/level2/script_tmp/"
+    level2_dir = os.path.join(run.results, "level2")  # f"outputs/{protein}/level2/script_tmp/"
     os.makedirs(level2_dir, exist_ok=True)
 
     log_msg += "CONFIDENCE LEVEL {}".format(CONFIDENCE_LEVEL)+"\n"
@@ -400,56 +412,68 @@ def predict_level2(run: RunSetup):
         df = pd.DataFrame.from_dict(result_dict)
         df.to_csv(os.path.join(level2_dir, f"{aa_id}_average_{CONFIDENCE_LEVEL}.csv"))
 
-        # compare with WT
-        # TODO ALIGN TO THE WT AND CHECK THAT CORRECT FILE IS USED EVERYWHERE
-        wt_fasta_name = os.path.join(level2_dir, f"{aa_id}_{CONFIDENCE_LEVEL}_toAlignWithWT.fasta")
-        of = open(wt_fasta_name, "w")
+        # compare a predicted AA index sequence with original WT
+        wt_predicted_fasta_path = os.path.join(run.fasta, f"{aa_id}_{CONFIDENCE_LEVEL}_toAlignWithWT.fasta")
+        msa_wt_comparison = os.path.join(run.fasta, "{}_{}_comparison.fasta".format(aa_id, CONFIDENCE_LEVEL))
 
-        of.write(">wt_{}\n".format(protein))
-        of.write(wt.replace("-", ""))
-        of.write(">predicted_{}\n".format(aa_id))
-        of.write(predicted_sequence.replace("-", ""))
-        of.write("\n")
-        of.close()
+        wt_predicted_fasta = {
+            f"wt_{protein}": wt.replace("_", ""),
+            f"predicted_{aa_id}": predicted_sequence.replace("-", "")
+        }
 
-        msa_comparison = os.path.join(level2_dir, "{}_{}_comparison.fasta".format(aa_id, CONFIDENCE_LEVEL))
-        os.system("clustalo -i " + wt_fasta_name + " -o " + msa_comparison + " --force")
+        alignment_comp, comp_msa_len = clustalo_sequences(wt_predicted_fasta_path, msa_wt_comparison, wt_predicted_fasta)
+        # of = open(wt_predicted_fasta_path, "w")
+        #
+        # of.write(">wt_{}\n".format(protein))
+        # of.write(wt.replace("-", ""))
+        # of.write(">predicted_{}\n".format(aa_id))
+        # of.write(predicted_sequence.replace("-", ""))
+        # of.write("\n")
+        # of.close()
+
+
+        # os.system("clustalo -i " + wt_fasta_name + " -o " + msa_wt_comparison + " --force")
 
         # create statistics for indices
-        mf = open(level2_dir + msa_comparison)
-        alignment_comp = dict()
-        loading_sequence = ""
-        for line in mf.readlines():
-            line = line.strip()
-            if line == "" or line == "\n":
-                if loading_sequence != "":
-                    alignment_comp[seq_name] = loading_sequence
-                continue
-            if line[0] == ">":
-                if loading_sequence == "":
-                    seq_name = line[1:]
-                    continue
-                alignment_comp[seq_name] = loading_sequence
-                loading_sequence = ""
-                seq_name = line[1:]
-                continue
-            loading_sequence += line
-        mf.close()
-        # Last sequence not in
-        alignment_comp[seq_name] = loading_sequence
+        # mf = open(level2_dir + msa_comparison)
+        # alignment_comp = dict()
+        # loading_sequence = ""
+        # for line in mf.readlines():
+        #     line = line.strip()
+        #     if line == "" or line == "\n":
+        #         if loading_sequence != "":
+        #             alignment_comp[seq_name] = loading_sequence
+        #         continue
+        #     if line[0] == ">":
+        #         if loading_sequence == "":
+        #             seq_name = line[1:]
+        #             continue
+        #         alignment_comp[seq_name] = loading_sequence
+        #         loading_sequence = ""
+        #         seq_name = line[1:]
+        #         continue
+        #     loading_sequence += line
+        # mf.close()
+        # # Last sequence not in
+        # alignment_comp[seq_name] = loading_sequence
+
+        ######################################################
+        # Now proceed logic for generation of a statistic report with sequentiality fluctuation per AA aligned to wt
+        #   highly customized report, please modify to your needs
 
         comparison_dict = {"Notes": [
             "{}".format(protein),
             "prediction",
             "{} index similarity".format(aa_id)]}
 
+        # get similarity of given index wt AA to successor AA
         wt_al, pred = list(alignment_comp.values())  # just 2 sequence in there
         for pos_i, (w, p) in enumerate(zip(wt_al, pred)):
             if w == "-" or p == "-":
-                d = ""
+                similarity = ""
             else:
-                d = aa_ind_matrixes[aa_id][aa_to_idx[w]][aa_to_idx[p]]
-            comparison_dict[pos_i] = [w, p, d]
+                similarity = aa_ind_matrixes[aa_id][aa_to_idx[w]][aa_to_idx[p]]
+            comparison_dict[pos_i] = [w, p, similarity]
 
         # metric statistics
         metrics_dict = {"Notes": ['Sequence',
@@ -463,11 +487,13 @@ def predict_level2(run: RunSetup):
         metrics_stats_r2, r2_col_vals, voting_predictions = create_stats_with_metric2(metrics["r2"][aa_id],
                                                                                       alignment, trees_map_to_msa,
                                                                                       msa_len)
-        # voting is same for
+        # voting is the same for
         metrics_stats_slope, col_vals, _ = create_stats_with_metric2(metrics["slope"][aa_id], alignment,
                                                                      trees_map_to_msa, msa_len)
 
         trends = sequence_trend_metrics(metrics, aa_id, trees_map_to_msa, msa_len)
+
+        # Create the final csv file per AA index with aligned maximum voted prediction and all statistics together
         aligned_wt = ""
         no_gaps_idx = 0
         for pos_i in range(msa_len):
@@ -503,16 +529,17 @@ def predict_level2(run: RunSetup):
             metrics_dict[pos_i] = col_csv_val
 
         best_met, positions, aa_stats = detect_best_metric(trends, alignment, aligned_wt, len(metrics_dict[0]), protein,
-                                                           cons_score)
+                                                           run)
         indices_stats[aa_id] = aa_stats
 
         df = pd.DataFrame.from_dict(comparison_dict)
-        df.to_csv(level2_dir + "{}_averageWT_{}.csv".format(aa_id, CONFIDENCE_LEVEL))
+        df.to_csv(os.path.join(level2_dir, "{}_averageWT_{}.csv".format(aa_id, CONFIDENCE_LEVEL)))
 
         # append the best metrics dict to csv
         metrics_dict.update(best_met)
 
-        if protein == "P0A8U6":
+        # in the case of used custom highlight show also that one
+        if len(run.highlight_pos):
             metrics_dict.update(positions)
 
         max_len = max([len(x) for _, x in metrics_dict.items()])
@@ -524,11 +551,14 @@ def predict_level2(run: RunSetup):
             ls.extend(filling)
 
         df = pd.DataFrame.from_dict(metrics_dict)
-        df.to_csv(gen_dir + "{}_metrics_{}.csv".format(aa_id, CONFIDENCE_LEVEL))
+        report_metric_path = os.path.join(level2_dir, f"{aa_id}_metrics_{CONFIDENCE_LEVEL}.csv")
+        # df.to_csv(gen_dir + "{}_metrics_{}.csv".format(aa_id, CONFIDENCE_LEVEL))
+        df.to_csv(report_metric_path)
 
         # store final
-        final_seq = "{}_FINAL_SEQUENCE_{}.fasta".format(aa_id, CONFIDENCE_LEVEL)
-        mf = open(gen_dir + final_seq, "w")
+        # final_seq = "{}_FINAL_SEQUENCE_{}.fasta".format(aa_id, CONFIDENCE_LEVEL)
+        predicated_consensus_path = os.path.join(level2_dir, f"{aa_id}_FINAL_SEQUENCE_{CONFIDENCE_LEVEL}.fasta")
+        mf = open(predicated_consensus_path, "w")
         mf.write(pred.replace("-", ""))
         mf.close()
 
@@ -540,6 +570,8 @@ def predict_level2(run: RunSetup):
         s.extend(filling)
 
     df = pd.DataFrame.from_dict(indices_stats)
-    df.to_csv(level2_dir + "indices_transitions{}.csv".format(CONFIDENCE_LEVEL))
-    with open(level2_dir + "indices_transitions{}.pkl".format(CONFIDENCE_LEVEL), "wb") as f:
+    indices_stats_csv_path = os.path.join(level2_dir, f"indices_transitions{CONFIDENCE_LEVEL}.csv")
+    indices_stats_pkl_path = os.path.join(level2_dir, f"indices_transitions{CONFIDENCE_LEVEL}.pkl")
+    df.to_csv(indices_stats_csv_path)
+    with open(indices_stats_pkl_path, "wb") as f:
         pickle.dump(indices_stats, f)

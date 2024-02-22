@@ -1,39 +1,39 @@
-# Vaencestors
+# SSP - Successor Predictor
 
-This project attempts to serve as backend for generation of ancestral like sequences
+This repository of scripts aims to investigate the evolutionary successor reconstruction strategy (SSP)
+as a complementary method to the Ancestral Sequence reconstruction (ASR). We evaluate SSP for a design of enhanced 
+variance in the evolutionary-based scheme according to physic-chemical AA properties of multiple AA indices. 
 
-Scripts in this repository are expected to be used as the backend service for 
-FireProt tool
+The scripts look for linear trends in evolution (simulated by ancestral sequences in a phylogenetic tree) 
+over a selected set of AA indices to get multiple suggested AA-index related mutations. 
+
+We run analysis for one protein over many randomly phylogenetic trees (tens of trees, ancestors included). 
+First, we predicted a successor per each tree and AA index (level1).
+Second, we introduce level2 consensus corresponding prediction of a final AA-index sequence over all phylogenetic trees.
+Finally, we suggest a final level3 sequence for all level2 predictions.
 
 ## Installation
 
-Please install clustalo to your system simply running `sudo apt-get -y install clustalo`
+Please install clustalo to your system simply running `sudo apt-get -y install clustalo` and check it is accessible in terminal 
+as `clustalo -h`.
 
 **These instructions assume you have the python package manager `conda` installed.**
 
 Go to the directory where you wish to have your project be stored and run
 ```
 cd folder/you/wish/to/place/your/project
-git clone git@git.loschmidt.cz/fireprot-asr-vae
-cd fireprot-asr-vae
+git clone git@git.loschmidt.cz/ssp
+cd ssp
 ```
 Create conda environment for the project
 ```
-conda create --name fireprot-asr-vae python=3.10
+conda create --name ssp python=3.10
 ```
 Activate environment and install requirement and make our project visible in the environment
 ```
-conda activate fireprot-asr-vae
+conda activate ssp
 conda install --file requirements.txt
-pip install -e .  # by this you make our latents library visible in the environment
-```
-The framework using PyTorch for Deep Learning therefor we need to install it.
-```
-conda install pytorch torchvision -c pytorch  # if your work station does not have GPU
-```
-or with GPU acceleration
-```
-conda install pytorch torchvision cudatoolkit -c pytorch
+pip install -e .  # by this you make our successor library visible in the environment
 ```
 ## Configuration
 `Yaml` configuration file is required when running experiments. To make setup of experiments more 
@@ -41,37 +41,42 @@ cloud friendly the `cli/config.py` client and `configs/config_template.yaml` exi
 
 Copy template file:
 ```
-cp configs/config_template.yaml my_cofig.yaml
+cp successors/configs/config_template.yaml my_cofig.yaml
 ```
 Set all fields by current experiment requirements, e.g. set out dir
-```
-python path_to_cli/configs.py set out_dir 'experiment1' path_to/my_cofig.yaml
-```
+All supported options and their descriptions for a running pipeline can be found there.
+
+#### Dataset description
+Scripts account for the dataset folder structure, set in `input` config parameter, as following:
+1. each tree has a separate folder (tree1, tree2 ...) 
+2. treeN folder must have **msa.fasta** and **ancestralTree.tree** files. (keep names as these)
+   1. **msa.fasta**: whole tree MSA or just sequences on the tree trajectory from the root to the 'query'
+   2. **ancestralTree.tree**: newick format of the phylogenetic tree
+
+It is worth mentioning, that `transition` option set to **YES** can case 'no mutational design' 
+for shallow phylogenetic trees (algorithm then applies prediction for evolutionary position with three or more 
+transitions as we consider this as a strong evolutionary signal). 
+
+For deep trees, `transition` option set to **NO** can cause to noisy sequence generation for deep trees (seven and more node from root to leaf).
 
 ## Running
 
-To run the pipeline you have to go to the folder where your experiments will be stored e.g. experiments
-```
-cd folder/with/experiments
-```
-### MSA preprocessing
-Prepare MSA data to train VAE by running:
-```
-python path/to/the/main/cli/main.py process /path/to/the/conf.yaml
-```
-All processing information are logged in the experiment directory folder  `experiment_path_dir/logs/msa_log.txt`
+To run the pipeline, you will find results in the corresponding folder specified in config file
 
-### Training
-Then you may modify the configuration file for training options (e.g. custom number of epoch or architecture)
-and you can run **TRAINING** by hitting this command to the command line:
+### Prediction
+Make level1 prediction (successors per tree and AA-index):
 ```
-python path/to/the/main/cli/main.py train /path/to/the/conf.yaml
+python path/to/the/main/cli/main.py predict /path/to/the/conf.yaml
 ```
-The 80/20% train/test data split is applied, with query sequence left for the training. 
-The `batch_size` the size of the dataset from the default but can modify by `conf`.
-Training can run for `num_of_epochs` or until the improvement is not reached in last 10 epochs.
-Also, linear decrease of L2 regularization factor for 1st quarter (in the case of `num_of_epochs`)
-or for first 1000 epochs in unset `num_of_epoch` regime.
+All processing information are logged in the experiment directory folder  `experiment_path_dir/logs/log_file.txt`
+
+### AA-INDEX sequence consensus
+To get level2 prediction (successor per AA-INDEX)
+```
+python path/to/the/main/cli/main.py level2 /path/to/the/conf.yaml
+```
+This command will generate quite many files in `results/level2` folder which you can investigate, 
+but it is not necessary. It is worth mentioning that this folder includes csv files {AA-INDEX}_averageWT_{}
 
 ### Generating ancestors
 Generate ancestors from the latent space is possible via running these commands:

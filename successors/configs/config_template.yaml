@@ -5,10 +5,21 @@ input: './path_to_directory_with_trees/'   # directory with phylogeny trees incl
 
 validation: YES            # predicted an extant sequence for validation purpose
 transition: YES            # predict only values in the case of 3 or more transitions between AA in the lineage
-trees: 131                 # number of trees in INPUT directory
 confidence_level: 0        # 0 insert the most probable AA by regression, 1 the second predicted AA and so on
 
 protein_name: CSP          # name of the protein to more customize the output file form
 
 # AA indices to use, see indices/aaindex.csv to get all indices currently supported by predictor, please add custom one
 indices: FASG760101 FASG760102 GOLD730102 WOLR790101 BHAR880101 BULH740101 FAUJ880108 ZIMJ680103 ZIMJ680104
+
+# Level 2 statistics custom setting
+highlight_top: 20  # number of suggested substitutions to be highlighted in the AA index csv report per sequentiality, fluctuation...
+#highlight_pos: 1 2 80 60  # special positions to highlight in a level 2 report
+
+# set to custom value if you find that conservation report is shifted
+#(can be caused by wrong alignment of predicted sequences, rare default None, just for visualization purposes)
+#conservation_offset: 2
+
+######################
+# NOTES / OBSERVATIONS
+# Transition

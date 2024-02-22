@@ -18,7 +18,7 @@ class RunSetup:
             conf = yaml.safe_load(f)
 
         # sanity check of the keys in the configuration file
-        for k in {'out_dir', 'input', 'validation', 'transition', }:  # out_dir is always present
+        for k in {'out_dir', 'input', 'validation', 'transition'}:  # out_dir is always present
             if k not in conf.keys():
                 print(f"  The required key {k} is not used in configuration file {config_file}")
                 exit(1)
@@ -42,7 +42,10 @@ class RunSetup:
         """Set the default values if not specified in the configuration file"""
         fallback_values = {
             "protein_name": "protein_name",
-            "query": "query"
+            "query": "query",
+            "highlight_top": 20,
+            "highlight_pos": [],
+            "conservation_offset": None
         }
         if attr_name in fallback_values:
             return fallback_values[attr_name]

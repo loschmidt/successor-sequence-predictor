@@ -49,6 +49,7 @@ def level2(file_path):
     prepare_wt_sequence(run)
     prepare_indices(run)
     predict_level2(run)
+    print("\n  See metric results and generated sequences per AA index in (out_dir_path)/results/level2")
     print("  Done")
 
 

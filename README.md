@@ -76,19 +76,20 @@ To get level2 prediction (successor per AA-INDEX)
 python path/to/the/main/cli/main.py level2 /path/to/the/conf.yaml
 ```
 This command will generate quite many files in `results/level2` folder which you can investigate, 
-but it is not necessary. It is worth mentioning that this folder includes csv files {AA-INDEX}_averageWT_{}
+but it is not necessary. It is worth mentioning that this folder includes csv files *AA-INDEX*_averageWT_0.csv with 
+AA-index similarities of replaced AAs in the final index consensus (1 - no change in property)
 
-### Generating ancestors
-Generate ancestors from the latent space is possible via running these commands:
+### Final Consensus
+Generate level3 statistics for individual substitutions in the tree and indices. 
+It generates two statistical files:
+1. **a3_*protein*_metrics_0.csv** - list and statistics for exact match of substitutions (same position and replaced AA)
+2. **b3_*protein*_metrics_0.csv** - list and statistics for substitutions from the same position but can be replaced by any AA  
 ```
-python path/to/the/main/cli/main.py ancestors /path/to/the/conf.yaml   # straight evolution protocol
+python path/to/the/main/cli/main.py level3 /path/to/the/conf.yaml 
 ```
-Results of generated ancestors with the profile are located in `results/` folder of `experiment_path` directory
+These results might be of particular interest as there is a complex overview over all mutations and their AA-indices, 
+so one can examine why the given suggestion appeared.
 
-## Data transformation
-
-You can transform custom data to the binary:
-
-```
-python cli/tasks.py binarize msa_path out_binary_path
-```
+##### Final consensus sequence
+The final consensus over all indices and trees can be found in `/path/to/output/dir/results/final_majority_consensus.fasta` 
+along with a wild type sequence for comparison. 

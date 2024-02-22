@@ -63,6 +63,9 @@ For deep trees, `transition` option set to **NO** can cause to noisy sequence ge
 
 To run the pipeline, you will find results in the corresponding folder specified in config file
 
+For demonstration,
+you can run example with LGK protein and example config file in `results/lgk/config/lgk_config.yaml` file.
+
 ### Prediction
 Make level1 prediction (successors per tree and AA-index):
 ```

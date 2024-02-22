@@ -7,10 +7,11 @@ variance in the evolutionary-based scheme according to physic-chemical AA proper
 The scripts look for linear trends in evolution (simulated by ancestral sequences in a phylogenetic tree) 
 over a selected set of AA indices to get multiple suggested AA-index related mutations. 
 
-We run analysis for one protein over many randomly phylogenetic trees (tens of trees, ancestors included). 
-First, we predicted a successor per each tree and AA index (level1).
-Second, we introduce level2 consensus corresponding prediction of a final AA-index sequence over all phylogenetic trees.
-Finally, we suggest a final level3 sequence for all level2 predictions.
+We conducted an analysis on a specific protein using multiple randomly generated phylogenetic trees,
+including ancestors.
+Firstly, we made a prediction for each tree and amino acid index (level 1).
+Secondly, we established a consensus at level 2 based on the predictions from all the phylogenetic trees.
+Finally, we suggested a level 3 sequence by combining all the level 2 predictions.
 
 ## Installation
 

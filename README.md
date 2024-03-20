@@ -1,4 +1,4 @@
-# SSP - Successor Predictor
+# SSP - Successor Sequence Predictor
 
 This repository of scripts aims to investigate the evolutionary successor reconstruction strategy (SSP)
 as a complementary method to the Ancestral Sequence reconstruction (ASR). We evaluate SSP for a design of enhanced 

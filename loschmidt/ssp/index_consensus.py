@@ -10,8 +10,8 @@ import statistics
 
 import pandas as pd
 
-from successors.parser_handler import RunSetup
-from successors.utils import load_msa, clustalo_sequences
+from loschmidt.ssp.parser_handler import RunSetup
+from loschmidt.ssp.utils import load_msa, clustalo_sequences
 
 
 def create_stats_with_metric(vals_over_trees, trees_msa, msa_mapping, msa_width):

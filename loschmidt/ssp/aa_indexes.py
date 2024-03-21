@@ -10,8 +10,8 @@ import pandas as pd
 import seaborn as sn
 from scipy.spatial import distance_matrix
 
-from successors.parser_handler import RunSetup
-from successors.utils import load_msa, store_msa
+from loschmidt.ssp.parser_handler import RunSetup
+from loschmidt.ssp.utils import load_msa, store_msa
 
 # Hardcoded index values
 aa_idx1 = {

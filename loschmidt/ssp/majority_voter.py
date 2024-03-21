@@ -1,8 +1,8 @@
 import os
 import pickle
 
-from successors.parser_handler import RunSetup
-from successors.utils import load_msa
+from loschmidt.ssp.parser_handler import RunSetup
+from loschmidt.ssp.utils import load_msa
 
 
 def majority_voter(run: RunSetup):

@@ -6,15 +6,15 @@ import glob
 import itertools
 import os
 import pickle
-from successors.internal_types import *
+from loschmidt.ssp.internal_types import *
 
 import numpy as np
 from Bio import Phylo
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
-from successors.parser_handler import RunSetup
-from successors.utils import load_msa
+from loschmidt.ssp.parser_handler import RunSetup
+from loschmidt.ssp.utils import load_msa
 
 target_vec = ""
 

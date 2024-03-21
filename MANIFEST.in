@@ -1,5 +1,0 @@
-include LICENSE
-include MANIFEST.in
-
-graft successors
-global-exclude *.py[cod] __pycache__ *.so

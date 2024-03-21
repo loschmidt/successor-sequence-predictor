@@ -1,53 +1,35 @@
-"""
-Successor reconstruction setup script
-Robust prediction of successor based on multiple phylogeny trees for inference
-"""
-
 from setuptools import setup, find_packages
-
-short_description = __doc__.split("\n")
-
-try:
-    with open("README.md", "r") as handle:
-        long_description = handle.read()
-except:
-    long_description = "\n".join(short_description[2:])
-
 
 setup(
     # Self-descriptive entries which should always be present
-    name='SuccessorRobustReconstruction',
+    name='loschmidt-ssp',
     author='Pavel Kohout, Loschmidt Laboratories',
     author_email='xkohou15@vutbr.cz',
     version="1.0",
-    description=short_description[0],
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://git.loschmidt.cz/llws/llws-runners",
-    license='MIT license',
-
+    description="Successor Sequence Predictor",
+    url="https://github.com/loschmidt/successor-sequence-predictor",
     packages=find_packages(),
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: LGPL License",
         "Operating System :: OS Independent",
         "Environment :: Console",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     install_requires=[
-        "click~=8.0.4",
+        "click~=8.1.7",
+        "pandas~=2.2.0",
         "pyyaml~=6.0",
         "numpy==1.26.4",
-        "scipy==1.10.1",
+        "scipy==1.12.0",
         "scikit-learn~=1.3.0",
         "BioPython",
-        "seaborn~=0.13",
-        "setuptools~=67.8.0"
+        "seaborn~=0.13"
     ],
     entry_points={
         'console_scripts': [
-            'successor=successors.cli.main:cli'
+            'loschmidt-ssp=loschmidt.ssp.cli.main:cli'
         ],
     }
 )

@@ -1,6 +1,6 @@
 __author__ = "Pavel Kohout <xkohou15@vutbr.cz>"
 __date__ = "2024/02/16"
-__description__ = " Importing the and parsing of configuration file and setup run environment"
+__description__ = "Importing the and parsing of configuration file and setup run environment"
 
 import datetime
 import os

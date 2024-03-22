@@ -1,7 +1,5 @@
-"""
-Successor reconstruction setup script
-Robust prediction of successor based on multiple phylogeny trees for inference
-"""
+import os
 
-# Add imports here
-from loschmidt.ssp import parser_handler
+DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
+
+AAINDEX_FILE = os.path.join(DATA_DIR, "aaindex.csv")

@@ -6,6 +6,8 @@ import glob
 import itertools
 import os
 import pickle
+
+from loschmidt.ssp import AAINDEX_FILE
 from loschmidt.ssp.internal_types import *
 
 import numpy as np
@@ -332,7 +334,7 @@ def get_indices_features(run_config: RunSetup) -> Tuple[AA_INDICES, str]:
     :param run_config:
     :return: Dictionary with parsed normalized indices values, log message
     """
-    aaindex_file = open(os.path.join('successors', 'indices', 'aaindex.csv'))
+    aaindex_file = open(AAINDEX_FILE)
 
     used_indices = []
     unused_indices = []

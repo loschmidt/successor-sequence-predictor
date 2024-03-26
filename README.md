@@ -54,6 +54,15 @@ transitions as we consider this as a strong evolutionary signal).
 For deep trees, `transition` option set to **NO** can cause to noisy sequence generation for deep trees (seven and more node from root to leaf).
 
 #### Dataset description
+
+Following supplement S2 manual for creating dataset for SSP prediction you can create data for your analysis
+using SigClust and Blast tools. 
+To replicate **step 3 from Supplement 2** and prepare data batches for phylogenetic tree construction using 
+FireProtAsr web tool use script `create_sets.py`. You can run the script as following:
+```
+python successors/create_sets.py --input_seq my_blast_sequences.fasta --clusters SigClust_ouput --query my_query_id --output_dir my_SPP_analysis 
+```
+
 Scripts account for the dataset folder structure, set in `input` config parameter, as following:
 1. each tree has a separate folder (tree1, tree2 ...) 
 2. treeN folder must have **msa.fasta** and **ancestralTree.tree** files. (keep names as these)

@@ -4,7 +4,7 @@ __description__ = "Keep often used logic together"
 
 import os
 
-from successors.internal_types import MSA_GAP_LEN, MSA
+from loschmidt.ssp.internal_types import MSA_GAP_LEN, MSA
 
 
 def load_msa(msa_file_path: str) -> MSA_GAP_LEN:

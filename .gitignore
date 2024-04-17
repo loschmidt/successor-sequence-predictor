@@ -1,6 +1,6 @@
 results/lgk/tmp_files/
 results/lgk/logs/
 .idea/
-SuccessorRobustReconstruction.egg-info/*
-*/__pycache__/*
-successors/cli/__pycache__/*
+*.egg-info
+__pycache__
+/dist

@@ -3,12 +3,12 @@ Client for a successor prediction project
 """
 import click
 
-from successors.final_consensus import predict_level3
-from successors.majority_voter import majority_voter
-from successors.predictor import predict
-from successors.parser_handler import RunSetup
-from successors.aa_indexes import prepare_indices, prepare_wt_sequence
-from successors.index_consensus import predict_level2
+from loschmidt.ssp.final_consensus import predict_level3
+from loschmidt.ssp.majority_voter import majority_voter
+from loschmidt.ssp.predictor import predict
+from loschmidt.ssp.parser_handler import RunSetup
+from loschmidt.ssp.aa_indexes import prepare_indices, prepare_wt_sequence
+from loschmidt.ssp.index_consensus import predict_level2
 
 
 class ImproperlyConfigured(Exception):

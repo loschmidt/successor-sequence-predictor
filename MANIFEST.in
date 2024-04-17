@@ -1,5 +1,5 @@
 include LICENSE
 include MANIFEST.in
 
-graft successors
+graft loschmidt/ssp
 global-exclude *.py[cod] __pycache__ *.so

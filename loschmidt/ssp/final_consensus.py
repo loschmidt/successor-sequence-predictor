@@ -7,7 +7,7 @@ import pickle
 
 import pandas as pd
 
-from successors.parser_handler import RunSetup
+from loschmidt.ssp.parser_handler import RunSetup
 
 CONS_SCORE = None
 CONS_POS = 0

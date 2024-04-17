@@ -6,15 +6,17 @@ import glob
 import itertools
 import os
 import pickle
-from successors.internal_types import *
+
+from loschmidt.ssp import AAINDEX_FILE
+from loschmidt.ssp.internal_types import *
 
 import numpy as np
 from Bio import Phylo
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
-from successors.parser_handler import RunSetup
-from successors.utils import load_msa
+from loschmidt.ssp.parser_handler import RunSetup
+from loschmidt.ssp.utils import load_msa
 
 target_vec = ""
 
@@ -332,7 +334,7 @@ def get_indices_features(run_config: RunSetup) -> Tuple[AA_INDICES, str]:
     :param run_config:
     :return: Dictionary with parsed normalized indices values, log message
     """
-    aaindex_file = open(os.path.join('successors', 'indices', 'aaindex.csv'))
+    aaindex_file = open(AAINDEX_FILE)
 
     used_indices = []
     unused_indices = []

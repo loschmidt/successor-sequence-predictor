@@ -44,7 +44,7 @@ YAML configuration file is required when running experiments. To make setup of e
 
 Copy template file:
 ```bash
-cp successors/configs/config_template.yaml my_cofig.yaml
+cp config_template.yaml my_cofig.yaml
 ```
 Set all fields by current experiment requirements, e.g. set out dir
 All supported options and their descriptions for a running pipeline can be found there.
@@ -81,9 +81,14 @@ To run the pipeline, you will find results in the corresponding folder specified
 For demonstration, you can run example with LGK protein and example config file in `results/lgk/config/lgk_config.yaml` file.
 
 ### Prediction
-Make level1 prediction (successors per tree and AA-index):
+User can make prediction in a step-wise manner or run all predictions at once.
 ```
 loschmidt-ssp predict /path/to/the/conf.yaml
+```
+
+Make level1 prediction (successors per tree and AA-index):
+```
+loschmidt-ssp level1 /path/to/the/conf.yaml
 ```
 All processing information are logged in the experiment directory folder  `experiment_path_dir/logs/log_file.txt`
 

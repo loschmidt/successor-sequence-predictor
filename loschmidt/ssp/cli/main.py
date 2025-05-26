@@ -24,7 +24,7 @@ def cli():
 @cli.command(name='predict')
 @click.argument('file_path')
 def predict_cli(file_path):
-    """ Setup indexes you want to use during analysis """
+    """ Make a full prediction with all steps at one """
     print("Predicting successor sequences with all steps at one")
     try:
         run = RunSetup(file_path)
@@ -53,7 +53,7 @@ def predict_cli(file_path):
 @cli.command(name='level1')
 @click.argument('file_path')
 def level1(file_path):
-    """ Setup indexes you want to use during analysis """
+    """ Predict successor sequences based on the given AA indices only for the query sequence, one tree at a time. """
     print("Predicting successor sequences")
     try:
         run = RunSetup(file_path)

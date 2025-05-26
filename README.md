@@ -44,7 +44,7 @@ YAML configuration file is required when running experiments. To make setup of e
 
 Copy template file:
 ```bash
-cp successors/configs/config_template.yaml my_cofig.yaml
+cp config_template.yaml my_cofig.yaml
 ```
 Set all fields by current experiment requirements, e.g. set out dir
 All supported options and their descriptions for a running pipeline can be found there.
@@ -54,6 +54,23 @@ for shallow phylogenetic trees (algorithm then applies prediction for evolutiona
 transitions as we consider this as a strong evolutionary signal). 
 
 For deep trees, `transition` option set to **NO** can cause to noisy sequence generation for deep trees (seven and more node from root to leaf).
+ 
+
+Detailed description of configuration parameters:
+
+| **Parameter**        | **Description**                                                                                                                                                                                                                                                                                             |
+| -------------------- |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `out_dir`            | Path to the directory where results will be stored. Make sure the directory exists or can be created by the script. <br>**Example:** `'./experiment_path/'`                                                                                                                                                 |
+| `input`              | Path to a directory containing phylogenetic trees with annotated ancestral sequences. <br>**Example:** `'./path_to_directory_with_trees/'`                                                                                                                                                                  |
+| `query` *(optional)* | Identifier of the sequence within the trees to focus predictions on. If not specified, a default query name is used. <br>**Example:** `"query"`                                                                                                                                                             |
+| `validation`         | If `YES`, the tool performs validation by predicting an extant (modern) sequence and comparing it with the known one. <br>**Values:** `YES` or `NO`                                                                                                                                                         |
+| `transition`         | If `YES`, restricts predictions to positions where **3 or more transitions** between amino acids occur in the lineage. This filters for more dynamic evolutionary sites. <br>**Values:** `YES` or `NO`                                                                                                      |
+| `confidence_level`   | Determines which predicted amino acid to insert based on the regression confidence: <br>• `0` – most probable (top prediction) <br>• `1` – second most probable <br>• etc.                                                                                                                                  |
+| `protein_name`       | Name of the protein used to customize output filenames and make reports more readable. <br>**Example:** `"CSP"`                                                                                                                                                                                             |
+| `indices`            | A list of amino acid indices (physicochemical properties) used during prediction. These must match those available in `loschmidt/ssp/data/aaindex.csv` (for prediction) and `loschmidt/ssp/aa_indexes.py` (report purposes). Custom indices can also be added. <br>**Example:** `FASG760101 FASG760102 ...` |
+| `highlight_top`      | Number of top candidate substitutions to highlight in the statistical output (e.g., for sequentiality, fluctuation). This helps focus on the most relevant positions. <br>**Example:** `20`                                                                                                                 |
+
+
 
 #### Dataset description
 
@@ -81,9 +98,14 @@ To run the pipeline, you will find results in the corresponding folder specified
 For demonstration, you can run example with LGK protein and example config file in `results/lgk/config/lgk_config.yaml` file.
 
 ### Prediction
-Make level1 prediction (successors per tree and AA-index):
+User can make prediction in a step-wise manner or run all predictions at once.
 ```
 loschmidt-ssp predict /path/to/the/conf.yaml
+```
+
+Make level1 prediction (successors per tree and AA-index):
+```
+loschmidt-ssp level1 /path/to/the/conf.yaml
 ```
 All processing information are logged in the experiment directory folder  `experiment_path_dir/logs/log_file.txt`
 

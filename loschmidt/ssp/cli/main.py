@@ -25,6 +25,35 @@ def cli():
 @click.argument('file_path')
 def predict_cli(file_path):
     """ Setup indexes you want to use during analysis """
+    print("Predicting successor sequences with all steps at one")
+    try:
+        run = RunSetup(file_path)
+        print(" Target directory: {}".format(run.out_dir))
+    except Exception as e:
+        print(f" Cannot fetch configuration from {file_path}")
+        print(e)
+        exit(2)
+    # level 1
+    predict(run)
+    print("  Level1: Done")
+    # level 2
+    prepare_wt_sequence(run)
+    prepare_indices(run)
+    predict_level2(run)
+    print("\n  See metric results and generated sequences per AA index in (out_dir_path)/results/level2")
+    print("  Level2: Done")
+    # level 3
+    predict_level3(run)
+    print(f"\n  See metric results and generated sequences per AA index in {run.out_dir}/results/level3")
+    majority_voter(run)
+    print("  Level3: Done")
+    print("  Calculation done")
+
+
+@cli.command(name='level1')
+@click.argument('file_path')
+def level1(file_path):
+    """ Setup indexes you want to use during analysis """
     print("Predicting successor sequences")
     try:
         run = RunSetup(file_path)

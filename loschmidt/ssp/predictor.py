@@ -284,8 +284,13 @@ def get_tree_lineage_sequences(dataset_tree_path: str, run: RunSetup) -> LINEAGE
     for clade in tree.get_terminals():
         path = tree.get_path(clade)
         if query_name.lower() in str(path[-1]).lower():
+            tree_root = tree.root
             for cl in path:
                 nodes.append("ancestral_" + str(cl.confidence))
+            if tree_root:
+                # Rooted tree, add the root node to the trajectory as well
+                tree_nodes = ["ancestral_" + str(tree_root.confidence)] + nodes
+                nodes = tree_nodes
             nodes[-1] = path[-1].name
             target_vec = sequences[nodes[-1]]
             if run.validation:
